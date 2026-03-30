@@ -1,0 +1,5 @@
+Analyse le texte suivant :
+
+{{TEXT}}
+
+Objectifs :... retourn JSON ...

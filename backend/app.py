@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
-from analysis import analyze_text, analyze_photos
-from economics import compute_economics
-from scoring import compute_score
-from utils.distance import compute_drive_time
+from backend.analysis import analyze_text, analyze_photos
+from backend.economics import compute_economics
+from backend.scoring import compute_score
+from backend.utils.distance import compute_drive_time
 
 app = Flask(__name__)
 

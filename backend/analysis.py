@@ -3,7 +3,7 @@ import os
 import json
 
 # ✅ BASE_DIR : chemin réel du dossier /backend/ (correct sur Render et en local)
-BASE_DIR =os.path.dirname(os.path.abspath(file)) 
+BASE_DIR =os.path.dirname(os.path.abspath(__file__)) 
 
 OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 api_key =os.getenv('OPENAI_API_KEY') 

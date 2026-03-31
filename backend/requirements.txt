@@ -1,6 +1,0 @@
-flask
-requests
-python-dotenv
-pandas
-numpy
-gunicorn

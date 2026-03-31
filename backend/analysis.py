@@ -34,7 +34,7 @@ def analyze_text(text):
         return json.loads(response.json()['choices'][0]['message']['content'])
         
         
-        def analyze_photos(photos): 
+def analyze_photos(photos): 
             """
             Analyse les photos de l'annonce. 
             Charge correctement le prompt depuis backend/prompts/ 

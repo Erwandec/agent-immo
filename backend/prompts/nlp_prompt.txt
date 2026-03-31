@@ -1,0 +1,5 @@
+Analyse le texte suivant :
+
+{{TEXT}}
+
+Objectifs : detect travaux etc JSON...

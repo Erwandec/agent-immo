@@ -41,7 +41,7 @@ def analyze_text(text):
             return json.loads(content)
             
             
-            def analyze_photos(photos): 
+def analyze_photos(photos): 
                 """
                 Analyse les photos de l'annonce.
                 Inclut un debug si OpenAI ne retourne pas 'choices'.

@@ -19,7 +19,7 @@ def analyze_text(text):
             json={ 
                 "model": "gpt-4o-mini",
                 "messages": [ 
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": [{"type":"text","text":prompt}]}
                 ] 
             },
             headers={"Authorization": f"Bearer {api_key}"}
@@ -45,7 +45,7 @@ def analyze_photos(photos):
         
         for url in photos:
             content.append({ 
-                "type": "input_image",
+                "type": "image_url",
                 "image_url": {
                     "url": url
                 } 

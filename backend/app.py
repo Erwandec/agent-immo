@@ -36,11 +36,11 @@ def analyze():
                                   travaux=travaux,
                                   ville=address.get('ville','Paris'))
     score = compute_score(
-        prix_m2_annonce=price/surface if surface else 99999,
-        prix_m2_marche=economics["prix_m2_marche"], 
-        travaux_score=vision.get("travaux_vision_score",0),
-        distance=distance,
-        rendement=economics["rendement_net"])
+        price/surface if surface else 99999,
+        economics["prix_m2_marche"], 
+        vision.get("travaux_vision_score",0),
+        distance,
+        economics["rendement_net"])
     return jsonify({"nlp":nlp,"vision":vision,"distance":distance,"economics":economics,"score":score})
 
 if __name__=='__main__': app.run(debug=True)

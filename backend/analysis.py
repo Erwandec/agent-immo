@@ -29,9 +29,16 @@ def analyze_text(text):
         
         if "choices" not in data:
             print("🔥 DEBUG OPENAI TEXT ERROR:", data) 
-            raise Exception("OpenAI returned an error for analyze_text") 
+            return None
+        raw=data["choices"][0]["message"]["content"]
+        try:
+            return json.loads(raw) 
+        except Exception as e:
+            print("🔥 DEBUG NLP PARSE ERROR:", raw)
+            return None
             
-            return json.loads(data["choices"][0]["message"]["content"]) 
+            
+            
             
             
 def analyze_photos(photos):

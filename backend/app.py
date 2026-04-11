@@ -1,46 +1,41 @@
 from flask import Flask, request, jsonify
-from backend.analysis import analyze_text, analyze_photos
-from backend.economics import compute_economics
-from backend.scoring import compute_score
-from backend.utils.distance import compute_drive_time
 
-app = Flask(__name__)
+from analysis import analyze 
 
-@app.route('/analyze', methods=['POST'])
-def analyze():
-    data = request.json
+app = Flask(name)
+
+@app.route("/health", methods=["GET"]) 
+def health():
+    return jsonify({"status": "ok"}), 200
     
-    text = data.get('description','')
-    photos = data.get('photos',[])
-    price = data.get('price',0)
-    surface = data.get('surface',0)
-    address = data.get('address',{})
-    nlp = analyze_text(text)
+@app.route("/analyze", methods=["POST"]) 
+def analyze_route(): 
+    data = request.get_json(force=True) 
+
+    # Ces champs sont obligatoires 
+    required_fields = ["price", "surface", "description", "address"] 
+    for field in required_fields: 
+        if field not in data: 
+            return jsonify({"error": f"Missing field: {field}"}), 400 
+
+    # Sécurisation des sous‑champs d’adresse 
+    address = data.get("address", {}) 
+    if not all(k in address for k in ["lat", "lng", "ville"]):
+        return jsonify({"error": "Address must include lat, lng, ville"}), 400 
+        
     try:
-        vision = analyze_photos(photos)
-        if not isinstance(vision,dict):
-            raise Exception("Vision returned invalid format")
+        # Le moteur principal 
+        result = analyze( 
+            data=data, 
+            nlp=data.get("nlp", {}),
+            vision=data.get("vision", {}) 
+        )
+        return jsonify(result), 200 
+    
     except Exception as e:
-        print(" Vision fallback:",e)
-        vision={"travaux_total":0,
-                "travaux_vision_score":0
-        }
-    try:
-        distance = compute_drive_time(address)
-    except:
-        distance=999
-    travaux=vision.get("travaux_total",0)
-    
-    economics = compute_economics(price=price, 
-                                  surface=surface,
-                                  travaux=travaux,
-                                  ville=address.get('ville','Paris'))
-    score = compute_score(
-        price/surface if surface else 99999,
-        economics["prix_m2_marche"], 
-        vision.get("travaux_vision_score",0),
-        distance,
-        economics["rendement_net"])
-    return jsonify({"nlp":nlp,"vision":vision,"distance":distance,"economics":economics,"score":score})
-
-if __name__=='__main__': app.run(debug=True)
+        # En prod, on loguerait mieux 
+        return jsonify({"error": str(e)}), 500 
+        
+        
+if name == "main":
+    app.run(host="0.0.0.0", port=10000)

@@ -1,78 +1,18 @@
-import requests 
-import os 
-import json
+# analysis.py
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+from economics import compute_economics 
+from scoring import score_opportunite, score_achat_revente 
 
-OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
-api_key = os.getenv("OPENAI_API_KEY")
+def analyze(data, nlp, vision): 
+    eco = compute_economics(data, vision, nlp) 
 
-
-def analyze_text(text):
-    prompt_path = os.path.join(BASE_DIR, "prompts", "nlp_prompt.txt") 
+    score_opp = score_opportunite(data, eco, vision) 
+    score_ar = score_achat_revente(eco, eco["prix_m2_dvf"]) 
     
-    with open(prompt_path, "r", encoding="utf-8") as f: 
-        prompt = f.read().replace("{{TEXT}}", text) 
-        
-        response = requests.post( 
-            OPENAI_API_URL, 
-            json={ 
-                "model": "gpt-4o-mini",
-                "messages": [ 
-                    {"role": "user", "content": [{"type":"text","text":prompt}]}
-                ] 
-            },
-            headers={"Authorization": f"Bearer {api_key}"}
-        )
-        
-        data = response.json() 
-        
-        if "choices" not in data:
-            print("🔥 DEBUG OPENAI TEXT ERROR:", data) 
-            return None
-        raw=data["choices"][0]["message"]["content"]
-        try:
-            return json.loads(raw) 
-        except Exception as e:
-            print("🔥 DEBUG NLP PARSE ERROR:", raw)
-            return None
-            
-            
-            
-            
-            
-def analyze_photos(photos):
-    prompt_path = os.path.join(BASE_DIR, "prompts", "vision_prompt.txt")
-    
-    with open(prompt_path, "r", encoding="utf-8") as f:
-        prompt = f.read() 
-
-        # ✅ Format correct demandé par OpenAI (avril 2026)
-        content = [{"type": "text", "text": prompt}] 
-        
-        for url in photos:
-            content.append({ 
-                "type": "image_url",
-                "image_url": {
-                    "url": url
-                } 
-            }) 
-            
-            response = requests.post(
-                OPENAI_API_URL,
-                json={ 
-                    "model": "gpt-4o", 
-                    "messages": [ 
-                        {"role": "user", "content": content} 
-                    ]
-                },
-                headers={"Authorization": f"Bearer {api_key}"} 
-            )
-            
-            data = response.json() 
-            
-            if "choices" not in data:
-                print("🔥 DEBUG OPENAI VISION ERROR:", data) 
-                raise Exception("OpenAI returned an error for analyze_photos")
-                
-                return json.loads(data["choices"][0]["message"]["content"])
+    return {
+        "scores": {
+            "opportunite": round(score_opp, 1),
+            "achat_revente": round(score_ar, 1) 
+        },
+        "economics": eco
+    }

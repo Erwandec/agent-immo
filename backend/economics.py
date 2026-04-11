@@ -1,7 +1,7 @@
 # economics.py 
 
-from constants import *
-from dvf import get_weighted_price 
+from backend.constants import *
+from backend.dvf import get_weighted_price 
 
 def compute_economics(data, vision, nlp):
     price = data["price"] 

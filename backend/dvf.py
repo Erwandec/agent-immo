@@ -10,7 +10,7 @@ def haversine(lat1, lon1, lat2, lon2):
   dphi = math.radians(lat2 - lat1) 
   dlambda = math.radians(lon2 - lon1) 
   a = math.sin(dphi/2)**2 + math.cos(phi1)math.cos(phi2)math.sin(dlambda/2)**2 
-  return 2Rmath.atan2(math.sqrt(a), math.sqrt(1-a)) 
+  return 2*R*math.atan2(math.sqrt(a), math.sqrt(1-a)) 
   
 def date_weight(date_str): 
   delta = (datetime.now() - datetime.strptime(date_str, "%Y-%m-%d")).days 

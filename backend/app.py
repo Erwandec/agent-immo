@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 
-from analysis import analyze 
+from backend.analysis import analyze 
 
 app = Flask(name)
 

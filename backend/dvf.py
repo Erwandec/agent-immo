@@ -24,24 +24,24 @@ def inflation_adjust(price, years, inflation_rate=0.02):
   return price * ((1 + inflation_rate) ** years) 
   
 def get_weighted_price(lat, lon, radius=200):
-    url = f"https://api.cquest.org/dvf?lat={lat}&lon={lon}&dist={radius}" 
-    data = requests.get(url).json().get("resultats", []) 
+  url = f"https://api.cquest.org/dvf?lat={lat}&lon={lon}&dist={radius}" 
+  data = requests.get(url).json().get("resultats", []) 
     
-    weighted = [] 
-    for v in data:
-      if not v.get("surface_reelle_bati") or not v.get("valeur_fonciere"): 
-        continue 
+  weighted = [] 
+  for v in data:
+    if not v.get("surface_reelle_bati") or not v.get("valeur_fonciere"): 
+      continue 
       
-      pm2 = v["valeur_fonciere"] / v["surface_reelle_bati"] 
-      dist = haversine(lat, lon, v["lat"], v["lon"]) 
-      w_dist = max(0.1, 1 - dist / radius) 
-      w_date = date_weight(v["date_mutation"]) 
-      year = int(v["date_mutation"][:4]) 
-      pm2_adj = inflation_adjust(pm2, datetime.now().year - year) 
+    pm2 = v["valeur_fonciere"] / v["surface_reelle_bati"] 
+    dist = haversine(lat, lon, v["lat"], v["lon"]) 
+    w_dist = max(0.1, 1 - dist / radius) 
+    w_date = date_weight(v["date_mutation"]) 
+    year = int(v["date_mutation"][:4]) 
+    pm2_adj = inflation_adjust(pm2, datetime.now().year - year) 
       
 weighted.append((pm2_adj, w_dist * w_date)) 
 
   if not weighted: 
     return None 
     
-    return sum(p*w for p,w in weighted) / sum(w for _,w in weighted)
+  return sum(p*w for p,w in weighted) / sum(w for _,w in weighted)

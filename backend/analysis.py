@@ -1,7 +1,7 @@
 # analysis.py
 
-from economics import compute_economics 
-from scoring import score_opportunite, score_achat_revente 
+from backend.economics import compute_economics 
+from backend.scoring import score_opportunite, score_achat_revente 
 
 def analyze(data, nlp, vision): 
     eco = compute_economics(data, vision, nlp) 

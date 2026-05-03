@@ -11,6 +11,9 @@ Règles :
 
 import math
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -103,7 +106,8 @@ def get_dvf_multi_output(lat, lon, radius=200):
         }
         for t, s in stats.items()
     }
-    print(len(raw), raw[:3])
+    logger.info(f"[DVF] Nombre de mutations brutes : {len(raw)}")
+    logger.info(f"[DVF] Exemples mutations brutes : {raw[:3]}")
     return {
         "rayon_m": radius,
         "mutations": mutations,

@@ -71,4 +71,3 @@ def get_weighted_price(lat, lon, radius=200):
         return None
 
     return sum(v * w for v, w in valeurs) / sum(w for _, w in valeurs)
-PK     ä££\µ5Û  Û             ´    dvf.pyPK      4   ÿ    

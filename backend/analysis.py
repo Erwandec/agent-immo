@@ -7,7 +7,7 @@ def analyze(data, nlp, vision):
     eco = compute_economics(data, vision, nlp) 
 
     score_opp = score_opportunite(data, eco, vision) 
-    score_ar = score_achat_revente(eco, eco["prix_m2_dvf"]) 
+    score_ar = score_achat_revente(data, eco)
     
     return {
         "scores": {

@@ -1,10 +1,23 @@
-# analysis.py
+# backend/analysis.py
+"""
+Analyse principale du moteur d'investissement immobilier.
+
+Inclut :
+- Étape A : exclusions structurelles (résidences gérées, bail commercial)
+- Appel DVF multi-sorties (sans inférence de typologie)
+"""
+
+from backend.scoring import score_opportunite, score_achat_revente
+from backend.economics import compute_economics
+from backend.dvf import get_dvf_multi_output
+
 
 def detect_exclusion(description: str):
     if not description:
         return None
 
     text = description.lower()
+
     exclusions = [
         "résidence étudiante",
         "résidence senior",
@@ -15,53 +28,50 @@ def detect_exclusion(description: str):
         "nemea",
         "espacil",
         "lmnp géré",
-        "pas d'occupation personnelle"
+        "pas d'occupation personnelle",
     ]
 
     for keyword in exclusions:
         if keyword in text:
             return {
                 "type": "Résidence gérée à bail commercial",
-                "raison": "Produit de rendement sans levier, revente contrainte et usage interdit"
+                "raison": "Produit de rendement sans levier, revente contrainte et usage interdit",
             }
 
     return None
 
 
-def analyze(data, nlp, vision):
+def analyze(data: dict, nlp: dict, vision: dict):
     description = data.get("description", "")
 
+    # === ÉTAPE A : EXCLUSION IMMÉDIATE ===
     exclusion = detect_exclusion(description)
     if exclusion:
         return {
             "scores": {
                 "opportunite": 0,
-                "achat_revente": 0
+                "achat_revente": 0,
             },
-            "exclusion": exclusion
+            "exclusion": exclusion,
         }
 
-    from backend.economics import compute_economics
-    from backend.scoring import score_opportunite, score_achat_revente
+    # === ANALYSE ÉCONOMIQUE ===
+    economics = compute_economics(data, vision, nlp)
 
-    eco = compute_economics(data, vision, nlp)
+    # === DVF MULTI-SORTIES ===
+    lat = data["address"]["lat"]
+    lon = data["address"]["lng"]
 
-    score_opp = score_opportunite(data, eco, vision)
-    score_ar = score_achat_revente(data, eco)
+    economics["dvf"] = get_dvf_multi_output(lat, lon)
+
+    # === SCORING ===
+    score_oppo = score_opportunite(data, economics, vision)
+    score_ar = score_achat_revente(data, economics)
 
     return {
         "scores": {
-            "opportunite": score_opp,
-            "achat_revente": score_ar
+            "opportunite": score_oppo,
+            "achat_revente": score_ar,
         },
-        "economics": eco
+        "economics": economics,
     }
-
-from backend.dvf import get_dvf_multi_output
-
-dvf_result = get_dvf_multi_output(
-    data["address"]["lat"],
-    data["address"]["lng"]
-)
-
-economics["dvf"] = dvf_result

@@ -1,21 +1,48 @@
 # analysis.py
 
-from backend.economics import compute_economics 
-from backend.scoring import score_opportunite, score_achat_revente 
+def detect_exclusion(description: str):
+    if not description:
+        return None
+
+    text = description.lower()
+    exclusions = [
+        "résidence étudiante",
+        "résidence senior",
+        "bail commercial",
+        "gestion déléguée",
+        "studéa",
+        "nexity",
+        "nemea",
+        "espacil",
+        "lmnp géré",
+        "pas d'occupation personnelle"
+    ]
+
+    for keyword in exclusions:
+        if keyword in text:
+            return {
+                "type": "Résidence gérée à bail commercial",
+                "raison": "Produit de rendement sans levier, revente contrainte et usage interdit"
+            }
+
+    return None
+
 
 def analyze(data, nlp, vision):
+    description = data.get("description", "")
 
-    # ✅ Normalisation VISION si absente
-    if not isinstance(vision, dict) or not vision:
-        vision = {
-            "travaux_total": 0,
-            "travaux_vision_score": 0.0,
-            "detail": []
+    exclusion = detect_exclusion(description)
+    if exclusion:
+        return {
+            "scores": {
+                "opportunite": 0,
+                "achat_revente": 0
+            },
+            "exclusion": exclusion
         }
 
-    # ✅ Normalisation NLP si absent
-    if not isinstance(nlp, dict):
-        nlp = {}
+    from backend.economics import compute_economics
+    from backend.scoring import score_opportunite, score_achat_revente
 
     eco = compute_economics(data, vision, nlp)
 
@@ -24,8 +51,8 @@ def analyze(data, nlp, vision):
 
     return {
         "scores": {
-            "opportunite": round(score_opp, 1),
-            "achat_revente": round(score_ar, 1)
+            "opportunite": score_opp,
+            "achat_revente": score_ar
         },
         "economics": eco
     }

@@ -56,3 +56,12 @@ def analyze(data, nlp, vision):
         },
         "economics": eco
     }
+
+from backend.dvf import get_dvf_multi_output
+
+dvf_result = get_dvf_multi_output(
+    data["address"]["lat"],
+    data["address"]["lng"]
+)
+
+economics["dvf"] = dvf_result

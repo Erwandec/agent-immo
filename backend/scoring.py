@@ -11,7 +11,8 @@ def score_opportunite(data, eco, vision):
     score_travaux = 20 * (1 - vision_score)
 
     score_dist = 15
-    score_credit = 20 if eco["credit"]["mensualite"] < 1000 else 0
+    mensualite = eco.get("credit", {}).get("mensualite", 1000)
+    score_credit = 20 if mensualite < 1000 else 0
 
     penalty_neuf = -50 if data.get("is_new") else 0
 

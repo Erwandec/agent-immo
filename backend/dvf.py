@@ -40,34 +40,51 @@ def inflation_adjust(price_m2, years, inflation_rate=0.02):
     return price_m2 * (1 + inflation_rate) ** years
 
 
+import json
+
 def get_weighted_price(lat, lon, radius=200):
-    """Prix au mÂ² DVF pondÃ©rÃ© par distance, date et inflation"""
     url = f"https://api.cquest.org/dvf?lat={lat}&lon={lon}&dist={radius}"
-    response = requests.get(url, timeout=10)
-    ventes = response.json().get("resultats", [])
+    try:
+        response = requests.get(url, timeout=10)
 
-    valeurs = []
+        # Si l'API ne répond pas correctement
+        if response.status_code != 200:
+            return None
 
-    for v in ventes:
-        surface = v.get("surface_reelle_bati") or v.get("surface_reelle_batie")
-        valeur = v.get("valeur_fonciere")
+        # Protection contre JSON vide ou invalide
+        try:
+            data = response.json()
+        except json.JSONDecodeError:
+            return None
 
-        if not surface or not valeur:
-            continue
+        ventes = data.get("resultats", [])
+        if not ventes:
+            return None
 
-        prix_m2 = valeur / surface
+        valeurs = []
 
-        dist = haversine(lat, lon, v["lat"], v["lon"])
-        w_dist = max(0.1, 1 - dist / radius)
-        w_date = date_weight(v["date_mutation"])
+        for v in ventes:
+            surface = v.get("surface_reelle_bati") or v.get("surface_reelle_batie")
+            valeur = v.get("valeur_fonciere")
 
-        year = int(v["date_mutation"][:4])
-        prix_m2_adj = inflation_adjust(prix_m2, datetime.now().year - year)
+            if not surface or not valeur:
+                continue
 
-        poids = w_dist * w_date
-        valeurs.append((prix_m2_adj, poids))
+            prix_m2 = valeur / surface
+            dist = haversine(lat, lon, v["lat"], v["lon"])
+            w_dist = max(0.1, 1 - dist / radius)
+            w_date = date_weight(v["date_mutation"])
 
-    if not valeurs:
+            year = int(v["date_mutation"][:4])
+            prix_m2_adj = inflation_adjust(prix_m2, datetime.now().year - year)
+
+            valeurs.append((prix_m2_adj, w_dist * w_date))
+
+        if not valeurs:
+            return None
+
+        return sum(p * w for p, w in valeurs) / sum(w for _, w in valeurs)
+
+    except Exception:
+        # En cas de souci réseau ou autre
         return None
-
-    return sum(v * w for v, w in valeurs) / sum(w for _, w in valeurs)

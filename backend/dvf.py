@@ -112,4 +112,5 @@ def get_dvf_multi_output(lat, lon, radius=200):
             "comparables_directs": False,
             "commentaire": "Analyse DVF fournie sans inférence de typologie"
         }
+    print(len(raw), raw[:3])
     }

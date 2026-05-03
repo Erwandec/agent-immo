@@ -103,7 +103,7 @@ def get_dvf_multi_output(lat, lon, radius=200):
         }
         for t, s in stats.items()
     }
-
+    print(len(raw), raw[:3])
     return {
         "rayon_m": radius,
         "mutations": mutations,
@@ -112,5 +112,5 @@ def get_dvf_multi_output(lat, lon, radius=200):
             "comparables_directs": False,
             "commentaire": "Analyse DVF fournie sans inférence de typologie"
         }
-    print(len(raw), raw[:3])
+    
     }

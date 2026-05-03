@@ -13,7 +13,7 @@ import math
 import requests
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("DVF")
 
 
 def haversine(lat1, lon1, lat2, lon2):

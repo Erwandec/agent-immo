@@ -1,34 +1,71 @@
-# scoring.py
+# backend/scoring.py
+"""
+Scoring refondu – compatible Étape A (exclusion) et Étape B (DVF diagnostic)
+
+Le scoring ne dépend plus d'un prix DVF unique.
+"""
+
 
 def score_opportunite(data, eco, vision):
+    score = 0
+
+    # --- 1. Décote apparente (micro-surface prise en compte) ---
     pm2_annonce = data["price"] / data["surface"]
-    ratio = eco["prix_m2_dvf"] / pm2_annonce
 
-    score_prix = min(40, max(0, 40 * ratio))
+    if data["surface"] < 12:
+        # micro-surface très contrainte
+        score -= 10
+    elif pm2_annonce < 8000:
+        score += 20
+    elif pm2_annonce < 9500:
+        score += 10
 
-    # Sécurisation Vision
-    vision_score = vision.get("travaux_vision_score", 0)
-    score_travaux = 20 * (1 - vision_score)
+    # --- 2. Potentiel travaux ---
+    travaux_score = vision.get("travaux_vision_score", 0)
 
-    score_dist = 15
-    mensualite = eco.get("credit", {}).get("mensualite", 1000)
-    score_credit = 20 if mensualite < 1000 else 0
+    if travaux_score > 0.5:
+        score += 25
+    elif travaux_score > 0.2:
+        score += 15
 
-    penalty_neuf = -50 if data.get("is_new") else 0
+    # --- 3. Faisabilité financière (contrainte, pas coût réel) ---
+    mensualite = eco.get("credit", {}).get("mensualite", None)
 
-    total = score_prix + score_travaux + score_dist + score_credit + penalty_neuf
-    return max(0, round(total, 1))
+    if mensualite is not None:
+        if mensualite < 600:
+            score += 20
+        elif mensualite < 800:
+            score += 10
+        else:
+            score -= 5
+
+    # --- 4. Malus structurels ---
+    if data["surface"] < 10:
+        score -= 10
+
+    dpe = vision.get("dpe", None)
+    if dpe in ["F", "G"]:
+        score -= 10
+
+    # bornage final
+    return max(0, min(100, round(score, 1)))
 
 
-def score_achat_revente(data, eco):
+def score_achat_revente(data, eco, vision=None):
     """
-    Score basé sur la marge brute après travaux + frais + crédit
+    Score achat-revente :
+    - n'existe que si travaux créateurs de valeur
+    - sinon retourne 0 par design
     """
-    value = eco["prix_m2_dvf"] * data["surface"]
-    margin = value - eco["cout_total"]
 
-    if margin <= 0:
+    travaux_score = vision.get("travaux_vision_score", 0) if vision else 0
+
+    if travaux_score < 0.3:
         return 0
 
-    # Score proportionnel à la marge
-    return min(100, round((margin / eco["cout_total"]) * 200, 1))
+    surface = data["surface"]
+    if surface < 12:
+        return 0  # micro-surface non liquides en revente active
+
+    # Placeholder : sera affiné à l'Étape C
+    return 50

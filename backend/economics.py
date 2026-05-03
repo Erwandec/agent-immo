@@ -1,74 +1,60 @@
-# economics.py 
+# economics.py
+import re
+from backend.constants import COPRO_OLD_RATE, COMMUNAL_TF_COEFFICIENT, NOTARY_RATE_OLD, DEFAULT_AGENCY_RATE, BANK_FILE_FEES
 
-from backend.constants import *
-from backend.dvf import get_weighted_price 
+
+def extract_charges_from_description(description: str):
+    if not description:
+        return None
+    match = re.search(r"charges.*?(\d{2,5})\s*€", description.lower())
+    return int(match.group(1)) if match else None
+
+
+def extract_taxe_fonciere_from_description(description: str):
+    if not description:
+        return None
+    match = re.search(r"taxe fonci[eè]re.*?(\d{2,5})\s*€", description.lower())
+    return int(match.group(1)) if match else None
+
 
 def compute_economics(data, vision, nlp):
-    price = data["price"] 
-    surface = data["surface"] 
-    city = data["address"]["ville"] 
-    lat = data["address"]["lat"] 
-    lon = data["address"]["lng"] 
+    price = data["price"]
+    surface = data["surface"]
+    city = data["address"]["ville"]
+    description = data.get("description", "")
 
-    # Frais 
-    notary = price * NOTARY_RATE_OLD 
-    agency = nlp.get("agency_fee", price * DEFAULT_AGENCY_RATE) 
-    dossier = BANK_FILE_FEES 
+    notary = price * NOTARY_RATE_OLD
+    agency = price * DEFAULT_AGENCY_RATE
+    dossier = BANK_FILE_FEES
 
-    # Taxe foncière 
-    tf_coeff = COMMUNAL_TF_COEFFICIENT.get(city, 20) 
-    taxe_fonciere = nlp.get("taxe_fonciere", surface * tf_coeff) 
-    tf_source = "Annonce" if "taxe_fonciere" in nlp else "DGFiP (data.gouv.fr)" 
+    charges_annonce = extract_charges_from_description(description)
+    if charges_annonce is not None:
+        charges_copro = charges_annonce
+        charges_source = "Annonce"
+    else:
+        charges_copro = surface * COPRO_OLD_RATE
+        charges_source = "Estimation immeuble ancien"
 
-    # Charges copro
-    charges = nlp.get(
-        "charges",
-        surface * COPRO_OLD_RATE
-    )
-    charges_source = "Annonce" if "charges" in nlp else "Estimation immeuble ancien" 
+    tf_annonce = extract_taxe_fonciere_from_description(description)
+    if tf_annonce is not None:
+        taxe_fonciere = tf_annonce
+        tf_source = "Annonce"
+    else:
+        taxe_fonciere = surface * COMMUNAL_TF_COEFFICIENT.get(city, 20)
+        tf_source = "DGFiP (data.gouv.fr)"
 
-    # Travaux 
-    travaux = vision.get("travaux_total", 0)
-    travaux_detail = vision.get("detail", [])
-    travaux_source = (
-        "Vision + NLP" if vision else "Estimation par défaut (pas de photos fournies)"
-    )
-
-
-    # DVF
-    dvf_pm2 = get_weighted_price(lat, lon) or 8500 
-
-    # Crédit
-    credit_cost = CREDIT_MONTHLY * 12 * CREDIT_DURATION_YEARS 
-    
-    total_cost = price + notary + agency + dossier + travaux + credit_cost 
-    
     return {
-        "prix_m2_dvf": dvf_pm2, 
         "frais": {
             "notaire": notary,
             "agence": agency,
-            "dossier": dossier 
-        },
-        "taxe_fonciere": { 
-            "montant": taxe_fonciere,
-            "source": tf_source 
+            "dossier": dossier
         },
         "charges_copro": {
-            "montant": charges,
+            "montant": charges_copro,
             "source": charges_source
         },
-        "travaux": {
-            "total": travaux,
-            "detail": travaux_detail,
-            "ratios": RENOVATION_RATIOS 
-        }, 
-        "credit": {
-            "mensualite": CREDIT_MONTHLY,
-            "taux": CREDIT_RATE, 
-            "duree": CREDIT_DURATION_YEARS,
-            "cout_total": credit_cost,
-            "source": "Moyenne marché bancaire France"
-        },
-        "cout_total": total_cost 
+        "taxe_fonciere": {
+            "montant": taxe_fonciere,
+            "source": tf_source
+        }
     }

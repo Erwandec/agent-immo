@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 
 from backend.analysis import analyze 
 
-app = Flask(name)
+app = Flask(__name__)
 
 @app.route("/health", methods=["GET"]) 
 def health():

@@ -28,11 +28,11 @@ def compute_economics(data, vision, nlp):
     charges_source = "Annonce" if "charges" in nlp else "Estimation immeuble ancien" 
 
     # Travaux 
-travaux = vision.get("travaux_total", 0)
-travaux_detail = vision.get("detail", [])
-travaux_source = (
-    "Vision + NLP" if vision else "Estimation par défaut (pas de photos fournies)"
-)
+    travaux = vision.get("travaux_total", 0)
+    travaux_detail = vision.get("detail", [])
+    travaux_source = (
+        "Vision + NLP" if vision else "Estimation par défaut (pas de photos fournies)"
+    )
 
 
     # DVF

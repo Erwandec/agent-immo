@@ -1,3 +1,9 @@
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s"
+)
+
 from flask import Flask, request, jsonify
 
 from backend.analysis import analyze 
